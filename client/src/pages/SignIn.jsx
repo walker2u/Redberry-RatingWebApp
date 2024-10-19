@@ -3,43 +3,53 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { GoogleAuthProvider, getAuth, signInWithPopup } from 'firebase/auth'
 import app from "../firebase";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { signInFailure, signInSuccess, signInStart } from '../redux/user/user.slice.js'
 
 const SignIn = () => {
     const navigate = useNavigate();
-    const handleGoogleClick = () => {
+    const dispatch = useDispatch();
+    const { error, loading } = useSelector(state => state.user);
+    const handleGoogleClick = async () => {
         try {
+            dispatch(signInStart());
             const provider = new GoogleAuthProvider();
             const auth = getAuth(app);
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    // This gives you a Google Access Token. You can use it to access the Google API.
-                    const credential = GoogleAuthProvider.credentialFromResult(result);
-                    const token = credential.accessToken;
-                    // The signed-in user info.
-                    const user = result.user;
-                    // IdP data available using getAdditionalUserInfo(result)
-                    // console.log(user.displayName);
-                    navigate("/", { state: { user: user.displayName } });
-                    // ...
-                }).catch((error) => {
-                    // Handle Errors here.
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    // The AuthCredential type that was used.
-                    const credential = GoogleAuthProvider.credentialFromError(error);
-                    // ...
-                });
+            const result = await signInWithPopup(auth, provider);
+            const res = await fetch('/api/auth/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: result.user.email,
+                    username: result.user.displayName,
+                    image: result.user.photoURL
+                })
+            });
+            const data = await res.json();
+            if (data.success === false) {
+                dispatch(signInFailure(data.message));
+                return;
+            }
+            if (data) {
+                dispatch(signInSuccess(data));
+                navigate('/');
+            }
 
         } catch (error) {
             console.log("could not Login with google", error)
         }
     }
+
+
     return (
         <div className="h-full flex items-center justify-center bg-red-100">
             <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6 sm:p-8">
                 <h2 className="text-3xl sm:text-4xl font-semibold text-center text-gray-800">Aao Bsdk</h2>
 
                 <div className="mt-6">
+                    {error && <p className="text-red-500 text-center">{error}</p>}
                     <button
                         onClick={handleGoogleClick}
                         className="w-full bg-red-500 text-white py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-red-600 transition"

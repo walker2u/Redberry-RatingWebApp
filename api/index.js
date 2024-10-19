@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import testRouter from './routes/test.route.js';
 import authRouter from './routes/auth.router.js';
 import userRouter from './routes/user.route.js';
-import mongoose from "mongoose";
-import dotenv from "dotenv";
+import imageRouter from './routes/image.route.js';
 
 dotenv.config();
 
@@ -13,10 +15,12 @@ mongoose.connect(process.env.MONGO).then(() => console.log("Connected to MongoDB
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api/test', testRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+app.use('/api/image', imageRouter);
 
 app.listen(3000, () => console.log("Server started on port 3000"));
 
