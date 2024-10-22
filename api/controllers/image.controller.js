@@ -2,6 +2,7 @@ import Image from '../models/image.model.js';
 import Rating from '../models/rating.model.js';
 import User from '../models/user.model.js';
 import { errorHandler } from '../utils/error.js'
+import Comment from '../models/comments.model.js';
 
 export const uploadImage = async (req, res, next) => {
     try {
@@ -66,6 +67,27 @@ export const rating = async (req, res, next) => {
         const newRating = await new Rating({ imageRef, rating, userId });
         await newRating.save();
         res.status(200).json(newRating);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const addComment = async (req, res, next) => {
+    try {
+        const { imageRef, comment, userId } = req.body;
+        const newComment = await new Comment({ comment, userId, imageRef });
+        await newComment.save();
+        res.status(200).json(newComment);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getComments = async (req, res, next) => {
+    try {
+        const { imageRef } = req.body;
+        const comments = await Comment.find({ imageRef });
+        res.status(200).json(comments);
     } catch (error) {
         next(error);
     }

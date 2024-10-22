@@ -1,43 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 function HomeCard({ user, image }) {
 
-    const [rating, setRating] = useState(0); // Store the rating value
-    const [message, setMessage] = useState(''); // For success/error messages
+    const [rating, setRating] = useState(0);
+    const [message, setMessage] = useState('');
+    const [comments, setComments] = useState([]);
+    const [commentForm, setCommentForm] = useState('');
 
     const handleRating = (rate) => {
         setRating(rate);
     };
 
     const submitRating = async () => {
+        setMessage('');
         if (rating === 0) {
             setMessage("Please select a rating before submitting.");
             return;
         }
-
         try {
-            const response = await fetch('http://localhost:3000/api/rating/rate', {
+            const response = await fetch('/api/image/rating', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    imageId: imageId,
-                    userId: userId,
-                    rating: rating,
+                    imageRef: image.imageRef,
+                    rating,
+                    userId: user._id,
                 }),
             });
-
             const data = await response.json();
-
-            if (data.success) {
-                setMessage("Rating submitted successfully!");
-            } else {
-                setMessage(`Error: ${data.message}`);
+            console.log(data);
+            if (data.success === false) {
+                setMessage(data.message);
+                return;
             }
         } catch (error) {
-            console.error('Error submitting rating:', error);
-            setMessage("An error occurred while submitting the rating.");
+            console.log(error);
         }
     };
 
@@ -51,21 +50,51 @@ function HomeCard({ user, image }) {
         setIsModalOpen(false);
     };
 
+    const handleCommentSubmit = async (event) => {
+        event.preventDefault();
+        if (commentForm === '') {
+            setMessage('Please enter a comment before submitting.');
+            return;
+        }
+        try {
+            const response = await fetch('/api/image/comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    imageRef: image.imageRef,
+                    comment: commentForm,
+                    userId: user._id,
+                }),
+            });
+            const data = await response.json();
+            console.log(data);
+            if (data.success === false) {
+                setMessage(data.message);
+                return;
+            }
+            setComments([...comments, commentForm]);
+            setCommentForm('');
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     return (
         <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden flex flex-col sm:flex-row mt-2">
             {/* Image Section */}
             <div className="w-full sm:w-1/2 cursor-pointer" onClick={openModal}>
                 <img
-                    src={image}
+                    src={image?.imageUrl}
                     alt="Card Image"
-                    className="w-full h-full sm:h-full object-cover"
+                    className="w-full h-auto sm:h-auto object-cover"
                 />
             </div>
 
             {/* Rating and Comment Section */}
-            <div className="w-full sm:w-1/2 p-6 flex flex-col justify-between">
-                <div className="rating-container">
-
+            <div className="w-full sm:w-1/2 p-6 flex flex-col">
+                <div className="rating-container flex flex-col">
                     <div className="rating-stars">
                         {/* Render 5 stars for rating */}
                         {[1, 2, 3, 4, 5].map((rate) => (
@@ -79,19 +108,29 @@ function HomeCard({ user, image }) {
 
                         ))}
                     </div>
-
-                    <button className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                    {message && <p className="text-red-500">{message}</p>}
+                    <button onClick={submitRating} className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
                         Submit Rating
                     </button>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-semibold mb-2">Leave a Comment</h2>
+                <div className='mt-4'>
+                    <h1 className='text-lg font-bold mb-2'>Comments</h1>
+                    <div className="h-96 overflow-y-scroll border border-red-300 rounded-lg p-2 mb-2">
+                        {comments.map((comment, index) => (
+                            <div key={index} className="mb-2">
+                                <strong>Anonymous : </strong>
+                                <span>{comment}</span>
+                            </div>
+                        ))}
+                    </div>
                     <textarea
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={commentForm}
+                        onChange={(e) => setCommentForm(e.target.value)}
+                        className="w-full p-3 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                         rows="4"
                         placeholder="Write your comment here..."
                     ></textarea>
-                    <button className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                    <button onClick={handleCommentSubmit} className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
                         Submit
                     </button>
                 </div>
@@ -111,7 +150,7 @@ function HomeCard({ user, image }) {
                             &#x2715;
                         </button>
                         <img
-                            src={image}
+                            src={image?.imageUrl}
                             alt="Full Image"
                             className="w-full h-1/2 object-contain"
                         />

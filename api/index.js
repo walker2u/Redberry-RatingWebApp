@@ -109,10 +109,10 @@ updateCurrentImage();
 app.get('/api/todaysImage', (req, res) => {
     try {
         if (currentImage) {
-            res.status(200).json(currentImage.imageUrl);
+            res.status(200).json(currentImage);
         } else {
             updateCurrentImage();
-            res.status(200).json(currentImage.imageUrl);
+            res.status(200).json(currentImage);
         }
     } catch (error) {
         console.error("Error serving today's image:", error);

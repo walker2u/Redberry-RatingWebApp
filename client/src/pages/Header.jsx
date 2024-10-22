@@ -10,7 +10,7 @@ function Header() {
             {/* Logo Section */}
             <Link to={"/"} className="flex items-center">
                 <img src='../public/images/logo.png' className='w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14' alt="" />
-                <div className="flex items-stretch">
+                <div className="flex items-stretch mb-1">
                     <span className="text-rose-800 text-2xl sm:text-3xl md:text-4xl">Red</span>
                     <span className="text-rose-400 text-2xl sm:text-3xl md:text-4xl">Berry...</span>
                 </div>
