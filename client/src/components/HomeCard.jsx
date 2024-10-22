@@ -1,6 +1,46 @@
 import React, { useState } from 'react';
 
-function HomeCard({ user }) {
+function HomeCard({ user, image }) {
+
+    const [rating, setRating] = useState(0); // Store the rating value
+    const [message, setMessage] = useState(''); // For success/error messages
+
+    const handleRating = (rate) => {
+        setRating(rate);
+    };
+
+    const submitRating = async () => {
+        if (rating === 0) {
+            setMessage("Please select a rating before submitting.");
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:3000/api/rating/rate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    imageId: imageId,
+                    userId: userId,
+                    rating: rating,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setMessage("Rating submitted successfully!");
+            } else {
+                setMessage(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            setMessage("An error occurred while submitting the rating.");
+        }
+    };
+
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const openModal = () => {
@@ -16,37 +56,33 @@ function HomeCard({ user }) {
             {/* Image Section */}
             <div className="w-full sm:w-1/2 cursor-pointer" onClick={openModal}>
                 <img
-                    src="https://assets.thehansindia.com/h-upload/2024/02/20/1600x960_1424537-anupama-parameswaran-new-images-0213-compressed.webp"
+                    src={image}
                     alt="Card Image"
-                    className="w-full h-[50vh] sm:h-[80vh] object-cover"
+                    className="w-full h-full sm:h-full object-cover"
                 />
             </div>
 
             {/* Rating and Comment Section */}
             <div className="w-full sm:w-1/2 p-6 flex flex-col justify-between">
-                <div className="mb-6">
-                    <h2 className="text-2xl font-semibold mb-2">Your Rating</h2>
-                    <div className="flex items-center">
-                        {[...Array(4)].map((_, i) => (
-                            <svg
-                                key={i}
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                                className="w-6 h-6 text-yellow-500"
+                <div className="rating-container">
+
+                    <div className="rating-stars">
+                        {/* Render 5 stars for rating */}
+                        {[1, 2, 3, 4, 5].map((rate) => (
+                            <span
+                                key={rate}
+                                onClick={() => handleRating(rate)}
+                                className={`cursor-pointer text-3xl ${rating >= rate ? "text-rose-600" : "text-gray-400"} hover:text-rose-600 transition`}
                             >
-                                <path d="M12 17.27L18.18 21 16.54 14.12 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 14.12 5.82 21 12 17.27z" />
-                            </svg>
+                                ★
+                            </span>
+
                         ))}
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                            className="w-6 h-6 text-gray-300"
-                        >
-                            <path d="M12 17.27L18.18 21 16.54 14.12 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 14.12 5.82 21 12 17.27z" />
-                        </svg>
                     </div>
+
+                    <button className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                        Submit Rating
+                    </button>
                 </div>
                 <div>
                     <h2 className="text-2xl font-semibold mb-2">Leave a Comment</h2>
@@ -75,9 +111,9 @@ function HomeCard({ user }) {
                             &#x2715;
                         </button>
                         <img
-                            src="https://assets.thehansindia.com/h-upload/2024/02/20/1600x960_1424537-anupama-parameswaran-new-images-0213-compressed.webp"
+                            src={image}
                             alt="Full Image"
-                            className="w-full h-auto object-contain"
+                            className="w-full h-1/2 object-contain"
                         />
                     </div>
                 </div>

@@ -1,42 +1,65 @@
 import { useEffect, useState } from 'react';
 import app from '../firebase.js';
 import { getStorage, ref, listAll, getDownloadURL, deleteObject, uploadBytesResumable } from "firebase/storage";
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { signInFailure } from '../redux/user/user.slice.js';
 
 function UploadImage() {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [images, setImages] = useState([]);
     const [imageRef, setImageRef] = useState([]);
     const [formData, setFormData] = useState({});
     const [progressPerc, setProgressPerc] = useState(0);
     useEffect(() => {
         const fetchImages = async () => {
-            const storage = getStorage(app);
-            const listRef = ref(storage, 'images/');
-            const res = await listAll(listRef);
-            const urls = await Promise.all(
-                res.items.map(async (itemRef) => {
-                    const downURL = await getDownloadURL(itemRef);
-                    return {
-                        url: downURL,
-                        ref: itemRef
-                    }
-                })
-            );
-            setImages(urls.map(item => item.url));
-            setImageRef(urls.map(item => item.ref));
-        };
+            try {
+                const res = await fetch('/api/image/getimages', {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'GET',
+                });
+                const data = await res.json();
+                if (data.success === false) {
+                    console.log(data.message);
+                    dispatch(signInFailure());
+                    navigate('/signin');
+                    return;
+                }
+                setImages(data.map(item => item.imageUrl));
+                setImageRef(data.map(item => item.imageRef));
+            } catch (error) {
+                console.log(error);
+            }
+        }
         fetchImages();
     }, []);
 
     const handleDelete = async (idx) => {
         try {
-            console.log(idx);
             const delRef = imageRef[idx];
+            //delete from mongo
+            const res = await fetch('/api/image/delete', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify({
+                    imageRef: delRef
+                })
+            });
+            const data = await res.json();
+            if (data.success === false) {
+                console.log(data.message);
+                return;
+            }
             const storage = await getStorage(app);
-            const desertRef = ref(storage, delRef.fullPath);
+            const desertRef = ref(storage, delRef);
             await deleteObject(desertRef);
             setImages(images.filter((url, index) => index !== idx));
             setImageRef(imageRef.filter((url, index) => index !== idx));
-            console.log('deleted');
         } catch (error) {
             console.log(error);
         }
@@ -59,9 +82,9 @@ function UploadImage() {
                 },
                 () => {
                     getDownloadURL(uploadTask.snapshot.ref).then((downURL) => {
-                        // setImages([...images, downURL]);
-                        // setImageRef([...imageRef, uploadTask.snapshot.ref]);
                         uploadToMongo(downURL, uploadTask.snapshot.ref.fullPath);
+                        setImages([...images, downURL]);
+                        setImageRef([...imageRef, uploadTask.snapshot.ref.fullPath]);
                     })
                 }
             )
@@ -84,7 +107,6 @@ function UploadImage() {
                 })
             });
             const data = await res.json();
-            console.log(data);
         } catch (error) {
             console.log(error);
         }
@@ -99,7 +121,7 @@ function UploadImage() {
 
             <h3>Available Images:</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                {images.map((url, index) => (
+                {images?.map((url, index) => (
                     <div key={index} style={{ margin: '10px' }}>
                         <img src={url} alt={`image-${index}`} style={{ width: '150px', height: '150px' }} />
                         <button onClick={() => handleDelete(index)} className='bg-red-600 text-white w-full p-1'>Delete</button>
