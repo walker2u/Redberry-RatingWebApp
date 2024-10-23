@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-function HomeCard({ user, image }) {
+function HomeCard({ user, image, com }) {
 
     const [rating, setRating] = useState(0);
     const [message, setMessage] = useState('');
@@ -74,7 +74,7 @@ function HomeCard({ user, image }) {
                 setMessage(data.message);
                 return;
             }
-            setComments([...comments, commentForm]);
+            setComments([...comments, commentForm, ...com]);
             setCommentForm('');
         } catch (error) {
             console.log(error);
@@ -130,7 +130,7 @@ function HomeCard({ user, image }) {
                         rows="4"
                         placeholder="Write your comment here..."
                     ></textarea>
-                    <button onClick={handleCommentSubmit} className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                    <button onClick={handleCommentSubmit} className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition w-full">
                         Submit
                     </button>
                 </div>

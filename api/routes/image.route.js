@@ -10,6 +10,6 @@ router.post('/delete', deleteImage);
 router.get('/random', verifyToken, randomImage);
 router.post('/rating', verifyToken, rating);
 router.post('/comment', verifyToken, addComment);
-router.get('/getComments', verifyToken, getComments);
+router.post('/getComments', verifyToken, getComments);
 
 export default router;
