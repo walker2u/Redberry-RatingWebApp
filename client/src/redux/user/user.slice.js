@@ -34,7 +34,7 @@ export const userSlice = createSlice({
         signOutFailure: (state, action) => {
             state.loading = false;
             state.error = action.payload;
-        }
+        },
     }
 })
 
